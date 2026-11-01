@@ -4,6 +4,20 @@
 that produces a Wayland-native Arch Linux desktop flavour built on **Hyprland**.
 Implements specification revision 2.0.
 
+## Documentation
+
+Full documentation lives in [`docs/`](docs/README.md):
+
+- [Index](docs/README.md)
+- [Architecture](docs/architecture.md) — module layout, stage pipeline, checkpoint/resume model
+- [Stages](docs/stages.md) — what each stage `00`–`90` does
+- [Configuration reference](docs/configuration.md) — every `install-config.yaml` key
+- [Hardware & media](docs/hardware-and-media.md) — detection, VA-API matrix, codecs, audio, printing, scanning
+- [Desktop](docs/desktop.md) — Hyprland 0.56 stack and Base16 theming
+- [Bootloader & security](docs/bootloader-and-security.md) — LUKS2, snapshots, Secure Boot, UKIs, login
+- [ISO & usage](docs/iso-and-usage.md) — building the image; interactive and unattended runs
+- [Troubleshooting](docs/troubleshooting.md) — logs, failure classes, rollback
+
 ## Design at a glance
 
 - **Official repos first.** AUR is opt-in behind a helper (`yay`).

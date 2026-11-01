@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# yaap-install — convenience wrapper on the YaapLinux live ISO.
+# Runs the installer from its bundled location. Passes arguments through so
+# `yaap-install --help`, `yaap-install --unattended --config /path`, etc. work.
+exec /etc/yaaplinux/install.sh "$@"

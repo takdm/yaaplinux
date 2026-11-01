@@ -1,0 +1,18 @@
+# Base16 scheme: Catppuccin Mocha (dark).
+# Keys base00..base0F follow the Base16 convention.
+base00: 1e1e2e   # base / background
+base01: 313244   # subtle background
+base02: 45475a   # surface
+base03: 585b70   # subtext
+base04: 6c7086   # text
+base05: cdd6f4   # foreground
+base06: a6adc8   # subtext light
+base07: f5e0dc   # text light
+base08: f38ba8   # red
+base09: fab387   # peach
+base0A: f9e2af   # yellow
+base0B: a6e3a1   # green
+base0C: 94e2d5   # teal
+base0D: 89b4fa   # blue
+base0E: cba6f7   # mauve
+base0F: f2cdcd   # rosewater

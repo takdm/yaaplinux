@@ -1,6 +1,7 @@
 # archiso build artifacts
 iso/work/
 iso/out/
+iso/build.log
 *.iso
 *.iso.sha256
 

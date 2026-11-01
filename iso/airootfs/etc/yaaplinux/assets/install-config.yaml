@@ -1,0 +1,122 @@
+version: 2
+meta:
+  created: "2026-10-31T12:00:00Z"
+  installer_version: "2.0"
+  stage: "preflight"        # resumption cursor
+
+hardware:
+  firmware: uefi               # uefi | bios  (detected, user-confirmable)
+  secure_boot:
+    setup_mode: false          # detected
+    enrolled: false            # set after successful sbctl enroll
+    strategy: sbctl            # sbctl | systemd | none
+    tpm2_auto_unlock: false
+  cpu:
+    vendor: amd                # intel | amd
+    microcode: amd-ucode       # intel-ucode | amd-ucode
+  gpu:
+    primary: amd               # intel | amd | nvidia | hybrid | unknown
+    intel_gen: null            # broadwell_plus | legacy | null
+    vaapi_driver: libva-mesa-driver
+    needs_linux_firmware_intel: false
+  storage:
+    type: nvme                 # nvme | sata | mmc
+    device: ""                 # detected / --target
+    rotational: false
+  peripherals:
+    bluetooth: true
+    fingerprint: false
+    webcam: true
+    printer: unknown           # yes | no | unknown
+    scanner: unknown           # yes | no | unknown
+    touchpad: true
+    tablet: false
+    modem: false
+  battery: true                # laptop detected
+
+disk:
+  layout: btrfs_subvolumes
+  luks:
+    enabled: true
+    cipher: aes-xts-plain64
+    key_size: 512
+    mapper_name: cryptroot
+    tpm2_auto_unlock: false
+  lvm:
+    enabled: false
+    rationale: "discouraged unless separate encrypted swap partition wanted"
+  swap:
+    style: zram_plus_file      # zram_plus_file | partition | none
+    zram_percent: 50
+    file_size_gb: 8
+    hibernation: false
+    swap_subvolume: "@swap"
+    resume_offset: 0
+  subvolumes:
+    - "@"
+    - "@home"
+    - "@swap"
+    - "@snapshots"
+  snapshots:
+    enabled: true
+    tool: snapper              # snapper | timeshift
+    boot_integration: true
+
+kernel:
+  primary: linux-zen
+  fallback: linux              # recovery
+  firmware_packages: []        # populated from hardware probe
+
+bootloader:
+  uefi: systemd-boot           # systemd-boot | grub
+  unified_kernel_images: true
+  ukify_sign: false
+  bios_warning_acknowledged: false
+
+login:
+  manager: greetd              # greetd | tty_autologin
+  greeter: tuigreet
+  autologin_user: null
+
+network:
+  manager: NetworkManager
+  wifi_backend: iwd
+
+locale:
+  lang: en_US.UTF-8
+  keymap: us
+  timezone: UTC
+
+system:
+  hostname: yaaplinux
+
+user:
+  name: ""
+  shell: /bin/bash
+  groups_extra: []
+
+desktop:
+  compositor: hyprland
+  hyprland_config: lua         # lua (0.55+) — legacy hyprlang deprecated
+  terminal: kitty
+  launcher: fuzzel
+  notifications: mako
+  locker: hyprlock             # swaylock fallback
+  wallpaper: hyprpaper
+  browser: firefox             # firefox | librewolf | both
+  portal: xdg-desktop-portal-hyprland
+  env: {}                      # populated by driver/gstreamer tuning
+
+media:
+  codecs: true
+  gstreamer_ugly: true         # opt-out available
+  vaapi: true
+  diagnostics: true            # vainfo, vdpauinfo
+  multilib: false              # opt-in
+  printing: false              # opt-in
+  printing_hp: false           # opt-in hplip
+  scanning: false              # opt-in
+  steam: false                 # opt-in steam-devices
+
+power:
+  daemon: power-profiles-daemon  # power-profiles-daemon | tlp | none (mutually exclusive)

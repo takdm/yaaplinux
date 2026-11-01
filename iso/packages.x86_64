@@ -22,5 +22,9 @@ reflector
 sbctl
 sudo
 vim
-yay
+# NOTE: no `yay` here. `yay` is an AUR package and cannot be pacman-installed,
+# so listing it in packages.x86_64 would abort the ISO build ("target not
+# found"). The installer bootstraps/uses an AUR helper on the *target* only when
+# the user opts in; lib/pkg.sh degrades to a warning if no helper is present.
 gum
+syslinux

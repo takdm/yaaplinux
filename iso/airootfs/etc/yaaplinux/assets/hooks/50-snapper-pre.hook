@@ -1,0 +1,11 @@
+# Snapper pre-transaction hook — snapshot before package changes.
+# Requires a snapper config named 'root' on /. See snapper-root.conf.
+[Trigger]
+Operation = Install
+Operation = Upgrade
+Type = Package
+Target = *
+
+[Action]
+When = PreTransaction
+Exec = /bin/sh -c 'snapper -c root create --description "pre $(date +%F\ %T)" --cleanup-action delete 2>/dev/null || true'
