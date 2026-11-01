@@ -1,0 +1,10 @@
+# Snapper post-transaction hook — closes the snapshot pair and cleans up old ones.
+[Trigger]
+Operation = Install
+Operation = Upgrade
+Type = Package
+Target = *
+
+[Action]
+When = PostTransaction
+Exec = /bin/sh -c 'snapper -c root create --description "post $(date +%F\ %T)" --cleanup-action delete 2>/dev/null || true; snapper -c root cleanup 2>/dev/null || true'

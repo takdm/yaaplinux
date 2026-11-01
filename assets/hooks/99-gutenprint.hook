@@ -1,0 +1,14 @@
+# Gutenprint post-transaction hook (spec §8.6 — highest-value printing item).
+# Gutenprint updates silently break printers until `cups-genppdupdate` runs and
+# CUPS restarts. This hook automates the maintenance on every gutenprint upgrade.
+[Trigger]
+Operation = Install
+Operation = Upgrade
+Type = Package
+Target = gutenprint
+Target = foomatic-db-gutenprint-ppds
+
+[Action]
+When = PostTransaction
+Description = Regenerating Gutenprint PPDs
+Exec = /bin/sh -c 'cups-genppdupdate && systemctl restart cups.service'

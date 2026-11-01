@@ -1,0 +1,26 @@
+# iso/packages.x86_64 — packages for the live image (spec §11.3).
+# Lean on purpose: the installer fetches the real payload onto the target.
+# This list only covers what the installer itself needs to run.
+base
+arch-install-scripts
+btrfs-progs
+cryptsetup
+dosfstools
+efibootmgr
+exfatprogs
+git
+gptfdisk
+libarchive
+linux
+linux-firmware
+mkinitcpio
+networkmanager
+iwd
+pacman
+parted
+reflector
+sbctl
+sudo
+vim
+yay
+gum

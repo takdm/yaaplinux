@@ -1,0 +1,9 @@
+# greetd config for YaapLinux Flavour (spec §10.5).
+# tuigreet renders a graphical greeter; default_focus logs the user in.
+# The session launches Hyprland.
+[service]
+type = "cmd"
+default_value = "tuigreet --time --time-format '%H:%M' --gemini --remember --remember-user-session --users-background /usr/share/wallpapers/default.jpg --cmd Hyprland"
+
+[service.greetd]
+# nothing extra; tuigreet is self-contained

@@ -1,0 +1,14 @@
+# archiso build artifacts
+iso/work/
+iso/out/
+*.iso
+*.iso.sha256
+
+# python / editor cruft
+__pycache__/
+*.pyc
+.DS_Store
+*.swp
+
+# local, possibly-populated config (the committed template lives in assets/)
+/etc/yaaplinux/install-config.yaml
