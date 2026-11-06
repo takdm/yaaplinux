@@ -106,6 +106,33 @@ mkarchiso -v -w ./work -o ./out iso
 `mkarchiso` reads `iso/profiledef.sh`, uses `iso/packages.x86_64` and
 `iso/pacman.conf`, and packages `iso/airootfs/` into a squashfs under `iso/out/`.
 
+**Bootable-initramfs requirement.** `iso/packages.x86_64` must include
+`mkinitcpio-archiso` and `iso/airootfs/etc/mkinitcpio.conf.d/archiso.conf` must
+set the archiso `HOOKS`. Without them mkinitcpio builds a stock initramfs that
+cannot mount the live rootfs — the ISO builds fine but drops to an emergency
+shell at "Failed to start Switch Root" on every boot. (This exact bug shipped
+in the v2.0 release ISO; see troubleshooting.)
+
+`iso/airootfs/etc/systemd/system/systemd-firstboot.service` is a symlink to
+`/dev/null` so the ISO boots straight to a login prompt instead of the
+interactive systemd-firstboot wizard.
+
+## 2a. Boot-testing in a VM
+
+`test-vm.sh` (repo root) boots any ISO in QEMU/KVM with a throwaway 30G qcow2
+disk, 2G RAM and user-mode networking:
+
+```bash
+sudo apt install -y qemu-system-x86 qemu-utils ovmf   # one-time, on Debian/Ubuntu hosts
+./test-vm.sh --iso out/yaaplinux-<date>-x86_64.iso    # UEFI (OVMF)
+./test-vm.sh --bios --iso out/yaaplinux-<date>-x86_64.iso
+```
+
+Delete `~/.cache/yaaplinux-vm/disk.qcow2` to reset the test machine. On a
+non-Arch host the whole ISO build itself can also run inside the VM: boot the
+official Arch ISO, `pacman -S archiso`, copy the repo tree in, and run
+`mkarchiso` there — that is how the v2.0.1 ISO was produced.
+
 > Test **both** the UEFI and BIOS boot paths in a VM before writing to USB
 > (README).
 

@@ -7,6 +7,9 @@
 # A stage is "done" only if the file exists AND the stored hash matches the
 # current config hash — so a config change forces a re-run.
 
+# Checkpoint directory (install.sh exports YAAP_CK_DIR; default if unset).
+_CK_DIR="${YAAP_CK_DIR:-/var/lib/yaaplinux/checkpoints}"
+
 stage_is_done() {
     local name="$1"
     local f="$_CK_DIR/$name.done"

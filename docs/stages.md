@@ -61,7 +61,10 @@ format or mount.
     `YAAP_LUKS_PASSPHRASE_FILE`, and sets `disk.luks.unattended=true` (it is
     published to the ESP in stage 30).
   - **TPM2 auto-unlock**: if `hardware.secure_boot.tpm2_auto_unlock` and the user
-    confirms, `systemd-cryptenroll --tpm2-device=auto` (warns on failure).
+    confirms, `systemd-cryptenroll --tpm2-device=auto` (warns on failure); the
+    password slot is kept unless `disk.luks.tpm2_wipe_password_slot` is true.
+  - `luksOpen` is non-interactive in unattended mode (keyfile from
+    `YAAP_LUKS_PASSPHRASE_FILE`).
 
 ## 20-format *(destructive)*
 

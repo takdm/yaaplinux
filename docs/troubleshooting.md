@@ -37,6 +37,20 @@ aggregate `die` message.
 The installer distinguishes **hard aborts** from **non-fatal warnings** on
 purpose ("fail loudly, recover gracefully").
 
+### 2.0 ISO boots into emergency mode — "Failed to start Switch Root"
+
+If the live ISO itself drops to an emergency shell before reaching a login
+prompt, the initramfs was built **without the archiso hooks** and cannot find
+or mount the live rootfs. The ISO builds cleanly either way, so only a boot
+test catches this (the v2.0 release ISO had exactly this bug).
+
+Check without booting: extract `arch/boot/x86_64/initramfs-linux.img` from the
+ISO (`xorriso -osirrox on -indev <iso> -extract ...`) and run
+`lsinitramfs initramfs-linux.img | grep -i archiso`. Empty output = missing
+hooks. Fix: `mkinitcpio-archiso` in `iso/packages.x86_64` and the archiso
+`HOOKS` in `iso/airootfs/etc/mkinitcpio.conf.d/archiso.conf`, then rebuild
+(see iso-and-usage §2).
+
 ### 2.1 Hard abort — `die()` (`lib/log.sh`)
 
 `die <msg>` records, then `exit 1`:

@@ -42,9 +42,16 @@ cryptsetup luksFormat --type luks2 \
   publishes it as an ESP keyfile (see §1.4). The passphrase is **never**
   discarded here — doing so would brick the post-reboot LUKS prompt.
 - **Optional TPM2 auto-unlock** (gated by `hardware.secure_boot.tpm2_auto_unlock`
-  + a confirmation): `systemd-cryptenroll --tpm2-device=auto --wipe-slot=password`
-  — warns and keeps passphrase-only if enrolment fails. The code notes this
-  *weakens physical-attack protection unless a PIN is added*.
+  + a confirmation): `systemd-cryptenroll --tpm2-device=auto` — enrols TPM2 and
+  **keeps the passphrase slot** (warns and keeps passphrase-only if enrolment
+  fails). Wiping the password slot is a separate opt-in
+  (`disk.luks.tpm2_wipe_password_slot: true`) and is best done manually after a
+  verified first boot: a TPM state change can otherwise leave the disk with no
+  usable unlock. The code notes this *weakens physical-attack protection unless
+  a PIN is added*.
+- Unattended `luksOpen` uses the generated passphrase via
+  `--key-file $YAAP_LUKS_PASSPHRASE_FILE`, so unattended runs never block on a
+  LUKS prompt mid-install.
 
 ### 1.2 btrfs subvolumes (`stages/20-format.sh`, `stages/30-mount.sh`)
 

@@ -82,7 +82,7 @@ setup_luks() {
         chmod 600 "$YAAP_LUKS_PASSPHRASE_FILE"
         cfg_set disk.luks.unattended true
         printf '%s' "$pass" | cryptsetup luksFormat --type luks2 \
-            --cipher "$cipher" --key-size "$key_size" --hash "$kdf" \
+            --cipher "$cipher" --key-size "$key_size" \
             --pbkdf argon2id "$part" - >>"$YAAP_LOG" 2>&1 \
             || die "luksFormat failed"
     else
@@ -93,16 +93,31 @@ setup_luks() {
             || die "luksFormat failed"
     fi
 
-    cryptsetup luksOpen --type luks2 "$part" "$mapper" >>"$YAAP_LOG" 2>&1 \
-        || die "luksOpen failed for $mapper"
+    if [ "${YAAP_UNATTENDED:-0}" = 1 ]; then
+        cryptsetup luksOpen --type luks2 --key-file "$YAAP_LUKS_PASSPHRASE_FILE" \
+            "$part" "$mapper" >>"$YAAP_LOG" 2>&1 \
+            || die "luksOpen failed for $mapper"
+    else
+        cryptsetup luksOpen --type luks2 "$part" "$mapper" >>"$YAAP_LOG" 2>&1 \
+            || die "luksOpen failed for $mapper"
+    fi
 
     # Optional TPM2 auto-unlock (weakens physical protection unless PIN added).
+    # Enrolment KEEPS the passphrase slot; wiping it is a separate opt-in
+    # (disk.luks.tpm2_wipe_password_slot) best done after a verified first boot.
     if [ "$(cfg_get hardware.secure_boot.tpm2_auto_unlock)" = true ]; then
         if ui_confirm yes "Add TPM2 auto-unlock? (weakens physical attack protection without a PIN)"; then
             if command -v systemd-cryptenroll >/dev/null 2>&1; then
-                systemd-cryptenroll --tpm2-device=auto --wipe-slot=password "$mapper" >>"$YAAP_LOG" 2>&1 \
-                    && log_info "TPM2 slot enrolled" \
-                    || log_warn "TPM2 enrolment failed; keeping passphrase-only"
+                if systemd-cryptenroll --tpm2-device=auto "$mapper" >>"$YAAP_LOG" 2>&1; then
+                    log_info "TPM2 slot enrolled (passphrase slot kept)"
+                    if [ "$(cfg_get disk.luks.tpm2_wipe_password_slot)" = true ]; then
+                        log_warn "tpm2_wipe_password_slot=true: wiping password slot"
+                        systemd-cryptenroll --tpm2-device=auto --wipe-slot=password "$mapper" >>"$YAAP_LOG" 2>&1 \
+                            || log_warn "password-slot wipe failed; passphrase slot retained"
+                    fi
+                else
+                    log_warn "TPM2 enrolment failed; keeping passphrase-only"
+                fi
             fi
         fi
     fi

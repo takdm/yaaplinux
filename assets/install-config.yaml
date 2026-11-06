@@ -42,6 +42,9 @@ disk:
     key_size: 512
     mapper_name: cryptroot
     tpm2_auto_unlock: false
+    # Dangerous: wipe the LUKS password slot after TPM2 enrolment, leaving TPM
+    # as the only unlock. Prefer doing this manually after a verified first boot.
+    tpm2_wipe_password_slot: false
   lvm:
     enabled: false
     rationale: "discouraged unless separate encrypted swap partition wanted"

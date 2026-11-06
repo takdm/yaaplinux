@@ -116,7 +116,7 @@ cp iso/airootfs/root/.automated_script.sh iso/airootfs/root/   # already present
 mkarchiso -v -w ./work -o ./out iso
 ```
 
-Test both UEFI and BIOS boot paths in a VM before writing to USB.
+Test both UEFI and BIOS boot paths in a VM before writing to USB — `./test-vm.sh --iso out/yaaplinux-<date>-x86_64.iso [--bios]` does this in QEMU/KVM (see docs/iso-and-usage.md §2a). The profile must include `mkinitcpio-archiso` and the archiso initramfs hooks or the ISO will not boot (docs/troubleshooting.md §2.0).
 
 ## Post-install
 

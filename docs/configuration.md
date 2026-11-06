@@ -80,6 +80,7 @@ offered for confirmation.
 | `disk.luks.key_size` | LUKS2 key size in bits. | integer | `512` | Config |
 | `disk.luks.mapper_name` | `/dev/mapper/` name for the container. | string | `cryptroot` | Config |
 | `disk.luks.tpm2_auto_unlock` | Declared TPM2 auto-unlock (note: stage 10 actually reads `hardware.secure_boot.tpm2_auto_unlock`). | bool | `false` | Config |
+| `disk.luks.tpm2_wipe_password_slot` | After TPM2 enrolment, wipe the LUKS password slot so TPM is the only unlock. Dangerous — a TPM state change (firmware update, Secure Boot policy change) can make the disk unrecoverable. Off by default; prefer wiping manually after a verified first boot. | bool | `false` | Config |
 | `disk.lvm.enabled` | Use LVM (discouraged; no active code path). | bool | `false` | Config |
 | `disk.lvm.rationale` | Why LVM is discouraged. | string | `"discouraged unless separate encrypted swap partition wanted"` | Config |
 | `disk.swap.style` | Swap strategy (drives fstab + power). | `zram_plus_file` / `partition` / `none` | `zram_plus_file` | Config |
