@@ -39,7 +39,12 @@ and hand-edited, but the next run's detection will recompute it.
 | `meta.installer_version` | Installer version stamp. | string | `"2.0"` | Config (template) |
 | `meta.stage` | Human-readable resumption cursor; set to the *next* phase label at the end of each stage. | string label | `"preflight"` | Runtime (stages) |
 
-## `hardware`
+## `profile`
+| Key | Meaning | Allowed values | Default | Source |
+| --- | --- | --- | --- | --- |
+| `profile` | Installer profile: full desktop or bare server. | `desktop` (default) | `desktop` | Config |
+| | `minimal` | Server-only: the desktop stack (stage 70) is skipped entirely; the system keeps base + drivers/media. | | |
+
 
 Populated by `detect_all` on every run; user-confirmable values are detected then
 offered for confirmation.
@@ -93,6 +98,12 @@ offered for confirmation.
 | `disk.snapshots.enabled` | Enable filesystem snapshots. | bool | `true` | Config |
 | `disk.snapshots.tool` | Snapshot tool. | `snapper` / `timeshift` | `snapper` | Config |
 | `disk.snapshots.boot_integration` | Snapshot boot integration. | bool | `true` | Config (not wired) |
+## `disk.dotfiles`
+| Key | Meaning | Allowed values | Default | Source |
+| --- | --- | --- | --- | --- |
+| `disk.dotfiles.repo` | Git repository cloned into the target user's home as `~/.dotfiles` (Omarchy-style config layer). Leave empty to skip. | URL string | `""` (none) | Config |
+| `disk.dotfiles.branch` | Branch/tag checked out from the dotfiles repository. | string | `main` | Config |
+
 
 ## `kernel`
 

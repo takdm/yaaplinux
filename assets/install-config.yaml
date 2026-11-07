@@ -1,43 +1,59 @@
+# YaapLinux v2.0.1 installer config — seed template.
+#
+# Single source of truth for the installer. Every key the installer READS at
+# runtime is listed here with its default; keys the code no longer touches are
+# removed below (they were declared in the v2.0 seed, but the implemented
+# pipeline no longer consults them). Configs that already set a removed key are
+# tolerated as inert data, but the value is never used.
+#
+# Layout note (v2.0+): storage:, peripherals:, battery: are top-level siblings
+# of hardware/. This is what makes resolve_target_disk work without guessing.
+# install-config.yaml is pure YAML — there is no TOML source, so no
+# TOML-to-YAML mapping applies here. (The only TOML files shipped are the
+# greetd config for the login manager.)
+#
+# Reference: docs/configuration.md, docs/stages.md
+
 version: 2
+profile: desktop              # desktop | minimal (server, skips the desktop stage)
 meta:
   created: "2026-10-31T12:00:00Z"
   installer_version: "2.0"
-  stage: "preflight"        # resumption cursor
+  stage: "preflight"          # runtime resumption cursor
 
 hardware:
-  firmware: uefi               # uefi | bios  (detected, user-confirmable)
+  firmware: uefi               # uefi | bios (detected, user-confirmable)
   secure_boot:
     setup_mode: false          # detected
-    enrolled: false            # set after successful sbctl enroll
+    enrolled: false            # set after a successful sbctl enrol
     strategy: sbctl            # sbctl | systemd | none
-    tpm2_auto_unlock: false
+    tpm2_auto_unlock: false    # stage 10 (TPM2 auto-unlock for LUKS)
   cpu:
     vendor: amd                # intel | amd
     microcode: amd-ucode       # intel-ucode | amd-ucode
   gpu:
     primary: amd               # intel | amd | nvidia | hybrid | unknown
     intel_gen: null            # broadwell_plus | legacy | null
-    vaapi_driver: libva-mesa-driver
-    needs_linux_firmware_intel: false
 
-# Top-level sections (code reads these as storage.*, peripherals.*, battery):
+# Top-level sections. Code reads storage.* / peripherals.* / battery as siblings
+# of hardware: (v2.0+, renamed from a nested form that silently no-op'd).
 storage:
   type: nvme                 # nvme | sata | mmc
   device: ""                 # detected / --target
-  rotational: false
-  esp_uuid: ""               # set by stage 30
-  root_uuid: ""              # set by stage 20
-  root_partition: ""         # set by stage 10
+  rotational: false          # detected
+  esp_uuid: ""               # runtime (stage 30)
+  root_uuid: ""              # runtime (stage 20/30)
+  root_partition: ""         # runtime (stage 10)
 peripherals:
   bluetooth: true
   fingerprint: false
   webcam: true
-  printer: unknown           # yes | no | unknown
-  scanner: unknown           # yes | no | unknown
+  printer: unknown           # yes | unknown (detection never writes "no")
+  scanner: unknown           # yes | unknown (no auto scanner probe)
   touchpad: true
   tablet: false
   modem: false
-battery: true                # laptop detected
+battery: true                 # detected
 
 disk:
   layout: btrfs_subvolumes
@@ -46,20 +62,13 @@ disk:
     cipher: aes-xts-plain64
     key_size: 512
     mapper_name: cryptroot
-    tpm2_auto_unlock: false
-    # Dangerous: wipe the LUKS password slot after TPM2 enrolment, leaving TPM
-    # as the only unlock. Prefer doing this manually after a verified first boot.
-    tpm2_wipe_password_slot: false
-  lvm:
-    enabled: false
-    rationale: "discouraged unless separate encrypted swap partition wanted"
+    tpm2_wipe_password_slot: false   # stage 10 (opt-in after TPM enrol)
   swap:
     style: zram_plus_file      # zram_plus_file | partition | none
-    zram_percent: 50
-    file_size_gb: 8
+    file_size_gb: 8            # swapfile size in GiB
     hibernation: false
     swap_subvolume: "@swap"
-    resume_offset: 0
+    resume_offset: 0           # runtime (stage 20)
   subvolumes:
     - "@"
     - "@home"
@@ -68,27 +77,22 @@ disk:
   snapshots:
     enabled: true
     tool: snapper              # snapper | timeshift
-    boot_integration: true
+  dotfiles:
+    repo: ""                   # git URL to clone into the user home
+    branch: ""                 # branch/tag (default: main)
 
 kernel:
   primary: linux-zen
   fallback: linux              # recovery
-  firmware_packages: []        # populated from hardware probe
 
 bootloader:
-  uefi: systemd-boot           # systemd-boot | grub
+  uefi: systemd-boot           # systemd-boot | grub (UEFI always uses systemd-boot)
   unified_kernel_images: true
-  ukify_sign: false
-  bios_warning_acknowledged: false
+  bios_warning_acknowledged: false   # runtime (stage 80)
 
 login:
   manager: greetd              # greetd | tty_autologin
   greeter: tuigreet
-  autologin_user: null
-
-network:
-  manager: NetworkManager
-  wifi_backend: iwd
 
 locale:
   lang: en_US.UTF-8
@@ -99,32 +103,22 @@ system:
   hostname: yaaplinux
 
 user:
-  name: ""
+  name: ""                     # prompt unless unattended
   shell: /bin/bash
   groups_extra: []
 
 desktop:
-  compositor: hyprland
-  hyprland_config: lua         # lua (0.55+) — legacy hyprlang deprecated
-  terminal: kitty
-  launcher: fuzzel
-  notifications: mako
-  locker: hyprlock             # swaylock fallback
-  wallpaper: hyprpaper
   browser: firefox             # firefox | librewolf | both
-  portal: xdg-desktop-portal-hyprland
-  env: {}                      # populated by driver/gstreamer tuning
 
 media:
   codecs: true
-  gstreamer_ugly: true         # opt-out available
-  vaapi: true
-  diagnostics: true            # vainfo, vdpauinfo
+  gstreamer_ugly: true         # opt-out with false
+  diagnostics: true            # vainfo / vdpauinfo + GStreamer tuning
   multilib: false              # opt-in
-  printing: false              # opt-in
-  print_hp: false              # opt-in hplip
-  scanning: false              # opt-in
-  steam: false                 # opt-in steam-devices
+  printing: false              # CUPS stack
+  print_hp: false              # hplip for HP printers
+  scanning: false              # SANE stack
+  steam: false                 # steam-devices
 
 power:
-  daemon: power-profiles-daemon  # power-profiles-daemon | tlp | none (mutually exclusive)
+  daemon: power-profiles-daemon  # power-profiles-daemon | tlp | none

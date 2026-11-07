@@ -145,6 +145,12 @@ Chroot configuration. Persists the installer into the target. Sets
   `/etc/yaaplinux/install-config.yaml`, the installer tree to `/opt/yaaplinux`,
   and `install_hooks` copies `assets/hooks/*.hook` to
   `/etc/pacman.d/hooks/`.
+- **Dotfiles** — `install_dotfiles` provisions `disk.dotfiles.repo` (branch
+  `disk.dotfiles.branch`) into the target user's home as `~/.dotfiles`, an
+  idempotent clone/pull (Omarchy-style config layer).
+- The post-install CLI (`lib/yaap`) is installed at
+  `/etc/yaaplinux/yaap` with subcommands `status`, `report`, `reboot`, and
+  `dotfiles sync|status`.
 
 ## 60-drivers-media
 
@@ -186,6 +192,10 @@ Hyprland desktop, components, theming wiring, and session registration. Sets
 `meta.stage=bootloader`.
 
 - `install_compositor` — `pkg_install hyprland`.
+- **profile=minimal**: the whole desktop stack (compositor, session
+  components, Hyprland config, session registration) is skipped — server
+  profile. `cfg_set meta.stage "done"` is recorded so a resume still looks
+  complete.
 - `install_session_components` — terminal/launcher/notification/lock/wallpaper/
   panel/portal/polkit/clipboard/screenshot/utility set: `kitty fuzzel mako
   hyprlock hyprpaper waybar hypridle xdg-desktop-portal-hyprland
