@@ -1,0 +1,205 @@
+#!/usr/bin/env bash
+# yaap — YaapLinux post-install CLI.
+#
+# Installed on the target system as /etc/yaaplinux/yaap (stage 90-postinstall).
+# Backed by the YaapLinux tree shipped into the target by stage 50:
+#   /etc/yaaplinux/    install-config.yaml, this script, logs
+#   /opt/yaaplinux/    installer tree (lib/, stages/, assets/, iso/)
+#
+# Usage:
+#   yaap                  Show this help
+#   yaap status           Summarise the installed system
+#   yaap report           Print the post-install report
+#   yaap reboot           Reboot the target system
+#   yaap dotfiles sync    (Re)clone the dotfiles repo into the user's home
+#   yaap dotfiles status  Show dotfiles state
+#
+# Subcommand exit codes: 0 = ok, 1 = error, 2 = usage error.
+set -uo pipefail
+
+# ---- paths ---------------------------------------------------------------
+export YAAP_CONFIG="${YAAP_CONFIG:-/etc/yaaplinux/install-config.yaml}"
+export YAAP_LIB="${YAAP_LIB:-/opt/yaaplinux/lib}"
+export YAAP_LOG_DIR="${YAAP_LOG_DIR:-/var/log/yaaplinux}"
+export YAAP_CK_DIR="${YAAP_CK_DIR:-/var/lib/yaaplinux/checkpoints}"
+
+# Target root: install.sh exports TARGET_ROOT (/mnt during install); on the
+# installed system it is unset, so "/".
+: "${TARGET_ROOT:=/}"
+
+# ---- minimal logging (only used if lib/log.sh is not loaded) ---------------
+: "${YAAP_LOG:=$YAAP_LOG_DIR/yaap-$(date +%Y%m%d-%H%M%S).log}"
+mkdir -p "$YAAP_LOG_DIR" 2>/dev/null || true
+: > "$YAAP_LOG" 2>/dev/null || true
+log_info()  { echo "[yaap] $(date '+%Y-%m-%dT%H:%M:%S%z') INFO  $*" >>"$YAAP_LOG"; }
+log_warn()  { echo "[yaap] $(date '+%Y-%m-%dT%H:%M:%S%z') WARN  $*" >>"$YAAP_LOG"; }
+log_err()   { echo "[yaap] $(date '+%Y-%m-%dT%H:%M:%S%z') ERROR $*" >>"$YAAP_LOG"; }
+die()       { log_err "FATAL: $*"; exit 1; }
+
+# ---- load YaapLinux shared helpers ----------------------------------------
+for _f in config dotfiles checkpoint; do
+    if [ -f "$YAAP_LIB/$_f.sh" ]; then
+        # shellcheck source=/dev/null
+        . "$YAAP_LIB/$_f.sh"
+    else
+        log_warn "yaap: shared helper missing: $YAAP_LIB/$_f.sh"
+    fi
+done
+
+# ---- helpers --------------------------------------------------------------
+stage_done() {
+    [ -f "$YAAP_CK_DIR/$1.done" ] || return 1
+    local stored
+    stored="$(sed -n '2p' "$YAAP_CK_DIR/$1.done" 2>/dev/null)"
+    [ "$stored" = "$(ck_config_hash)" ]
+}
+
+yaap_completed() {
+    local s out=()
+    for s in 00-preflight 10-partition 20-format 30-mount 40-pacstrap \
+             50-base-config 60-drivers-media 70-desktop 80-bootloader 90-postinstall; do
+        if stage_done "$s"; then out+=("$s"); fi
+    done
+    printf '%s\n' "${out[*]:-<none>}"
+}
+
+yaap_dotfiles_sync() {
+    local user repo branch
+    user="$(cfg_get user.name)"
+    repo="$(cfg_get disk.dotfiles.repo)"
+    branch="$(cfg_get disk.dotfiles.branch)"
+    [ -n "$user" ] || { log_err "no user.name in config; cannot sync dotfiles"; return 1; }
+    [ -n "$repo" ] || { log_warn "disk.dotfiles.repo unset; nothing to clone"; return 0; }
+    yaap_dotfiles_clone "$TARGET_ROOT" "$user" "$repo" "$branch"
+}
+
+yaap_dotfiles_status_cmd() {
+    local st
+    st="$(yaap_dotfiles_status "$TARGET_ROOT" "$(cfg_get user.name)")"
+    echo "dotfiles: $st"
+}
+
+yaap_status() {
+    local profile hn user dev luks dotfiles
+    profile="$(cfg_get profile)"
+    hn="$(cfg_get system.hostname)"
+    user="$(cfg_get user.name)"
+    dev="$(cfg_get storage.device)"
+    luks="$(cfg_get disk.luks.enabled)"
+    dotfiles="$(yaap_dotfiles_status "$TARGET_ROOT" "$user")"
+    echo "YaapLinux post-install status"
+    echo "  profile:       ${profile:-<unset>}"
+    echo "  hostname:      ${hn:-<unset>}"
+    echo "  user:          ${user:-<unset>}"
+    echo "  target root:   $TARGET_ROOT"
+    echo "  target disk:   ${dev:-<detected at install time>}"
+    echo "  luks:          ${luks:-<unset>}"
+    echo "  dotfiles:      ${dotfiles:-<unset>}"
+    echo "  completed:     $(yaap_completed)"
+    echo "  install log:   $YAAP_LOG"
+}
+
+yaap_report() {
+    echo "=============================================="
+    echo " YaapLinux post-install report"
+    echo " generated $(date '+%Y-%m-%dT%H:%M:%S%z')"
+    echo "=============================================="
+    echo
+    echo "Completed stages:"
+    yaap_completed
+    echo
+    echo "Configuration:"
+    echo "  profile:      $(cfg_get profile)"
+    echo "  hostname:     $(cfg_get system.hostname)"
+    echo "  user:         $(cfg_get user.name)"
+    echo "  target root:  $TARGET_ROOT"
+    echo "  disk:         $(cfg_get storage.device) ($(cfg_get storage.type))"
+    echo "  luks:         $(cfg_get disk.luks.enabled)"
+    echo "  swap:         $(cfg_get disk.swap.style) hibernation=$(cfg_get disk.swap.hibernation)"
+    echo "  snapshots:    $(cfg_get disk.snapshots.enabled) ($(cfg_get disk.snapshots.tool))"
+    echo "  desktop:      profile=$(cfg_get profile) compositor=$(cfg_get desktop.compositor)"
+    echo "  browser:      $(cfg_get desktop.browser)"
+    echo "  multilib:     $(cfg_get media.multilib)"
+    echo
+    echo "Service state (target):"
+    if [ -x "$TARGET_ROOT/usr/bin/systemctl" ] && [ -d "$TARGET_ROOT/run/systemd/system" ]; then
+        arch-chroot "$TARGET_ROOT" systemctl is-enabled NetworkManager 2>/dev/null \
+            || echo "  NetworkManager: unknown"
+    else
+        echo "  NetworkManager: unknown (target not booted)"
+    fi
+    echo
+    echo "Manual follow-up items:"
+    echo "  - Reboot, then log in at the greetd prompt."
+    if [ "$(cfg_get disk.snapshots.enabled)" != true ]; then
+        echo "  - Snapshots disabled by profile/config."
+    fi
+    if [ "$(cfg_get disk.luks.unattended)" = true ]; then
+        echo "  - UNATTENDED LUKS: passphrase keyfile was placed on the ESP."
+    fi
+    echo "  - Yaap CLI: /etc/yaaplinux/yaap (status, report, reboot, dotfiles)"
+    echo
+    echo "Useful paths:"
+    echo "  Install log: $YAAP_LOG"
+    echo "  Config:      /etc/yaaplinux/install-config.yaml"
+}
+
+yaap_reboot() {
+    if [ -d "$TARGET_ROOT/run/systemd/system" ]; then
+        # Running inside the installed system (after first boot).
+        if arch-chroot "$TARGET_ROOT" systemctl reboot >>"$YAAP_LOG" 2>&1; then
+            return 0
+        fi
+        log_warn "systemctl reboot failed; trying reboot(8)"
+    else
+        log_warn "not inside a booted installed system; using reboot(8)"
+    fi
+    command -v reboot >/dev/null 2>&1 || { log_err "no reboot command found"; return 1; }
+    reboot
+    return 0
+}
+
+usage() {
+    sed -n '2,20p' "$0" | sed 's/^# \{0,1\}//'
+}
+
+# ---- dispatch (only runs when executed, not when sourced) --------------
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+case "${1:-}" in
+    status)
+        yaap_status
+        ;;
+    report)
+        yaap_report
+        ;;
+    reboot)
+        yaap_reboot
+        ;;
+    dotfiles)
+        case "${2:-}" in
+            sync)
+                yaap_dotfiles_sync
+                ;;
+            status)
+                yaap_dotfiles_status_cmd
+                ;;
+            *)
+                echo "yaap: unknown dotfiles subcommand: ${2:-}" >&2
+                echo "  usage: yaap dotfiles {sync|status}" >&2
+                exit 2
+                ;;
+        esac
+        ;;
+    -h|--help|"")
+        usage
+        exit 0
+        ;;
+    *)
+        echo "yaap: unknown subcommand: $1" >&2
+        echo "  run 'yaap --help' for usage" >&2
+        exit 2
+        ;;
+esac
+
+exit 0
+fi

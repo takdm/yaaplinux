@@ -7,6 +7,12 @@ STAGE_ID="70-desktop"
 
 run_stage() {
     ensure_chroot
+    # profile=minimal: server profile — the desktop stack is not installed.
+    if [ "$(cfg_get profile)" = "minimal" ]; then
+        log_info "profile=minimal: skipping desktop stage (server profile)"
+        cfg_set meta.stage "done"
+        return 0
+    fi
     install_compositor
     install_session_components
     install_browser
