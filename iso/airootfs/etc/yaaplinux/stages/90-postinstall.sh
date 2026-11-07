@@ -6,6 +6,7 @@ STAGE_ID="90-postinstall"
 
 run_stage() {
     ensure_chroot
+    install_yaap_cli
     configure_snapshots
     finalize_config_copy
     write_report
@@ -45,4 +46,15 @@ finalize_config_copy() {
     mkdir -p "$dst"
     cp "$(_cfg_path)" "$dst/install-config.yaml" 2>/dev/null || true
     log_info "finalized $dst/install-config.yaml"
+}
+
+# install_yaap_cli — ship the post-install CLI into the target.
+# Installs /etc/yaaplinux/yaap from lib/yaap (bundled with the installer tree
+# at /opt/yaaplinux on the target).
+install_yaap_cli() {
+    local src="$SCRIPT_DIR/lib/yaap" dst="$TARGET_ROOT/etc/yaaplinux"
+    mkdir -p "$dst"
+    cp "$src" "$dst/yaap" 2>/dev/null || { log_err "cannot install yaap CLI"; return 1; }
+    chmod 0755 "$dst/yaap"
+    log_info "post-install CLI installed -> $dst/yaap"
 }

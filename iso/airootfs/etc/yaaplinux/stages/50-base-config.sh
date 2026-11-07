@@ -3,6 +3,11 @@
 # hostname, initramfs, user, sudo, network, microcode. Also persists the
 # installer config into the target and copies pacman hooks.
 
+# Dotfiles: provision the user's dotfiles repo into the target home
+# (Omarchy-style config layer). Sourced from lib/dotfiles.sh.
+# shellcheck source=/dev/null
+source "$SCRIPT_DIR/lib/dotfiles.sh"
+
 STAGE_ID="50-base-config"
 
 run_stage() {
@@ -13,6 +18,7 @@ run_stage() {
     install_microcode
     configure_initramfs
     create_user
+    install_dotfiles
     configure_sudo
     configure_network
     copy_installer_artifacts
@@ -182,6 +188,20 @@ copy_installer_artifacts() {
     # Install pacman hooks (snapper, gutenprint) if present.
     install_hooks
     log_info "installer artifacts copied to $dst and /opt/yaaplinux"
+}
+
+# install_dotfiles — provision the user's dotfiles repo into the target home.
+# Reads disk.dotfiles.repo/branch from the config; idempotent (already-present
+# clones are fast-forward pulled). Non-fatal if the clone fails.
+install_dotfiles() {
+    local user repo branch
+    user="$(cfg_get user.name)"
+    [ -n "$user" ] || { log_warn "no user.name set; skipping dotfiles"; return 0; }
+    repo="$(cfg_get disk.dotfiles.repo)"
+    [ -n "$repo" ] || { log_info "disk.dotfiles.repo unset; skipping dotfiles"; return 0; }
+    branch="$(cfg_get disk.dotfiles.branch)"
+    [ -n "$branch" ] || branch="main"
+    yaap_dotfiles_clone "$TARGET_ROOT" "$user" "$repo" "$branch"
 }
 
 install_hooks() {
