@@ -19,20 +19,25 @@ hardware:
     intel_gen: null            # broadwell_plus | legacy | null
     vaapi_driver: libva-mesa-driver
     needs_linux_firmware_intel: false
-  storage:
-    type: nvme                 # nvme | sata | mmc
-    device: ""                 # detected / --target
-    rotational: false
-  peripherals:
-    bluetooth: true
-    fingerprint: false
-    webcam: true
-    printer: unknown           # yes | no | unknown
-    scanner: unknown           # yes | no | unknown
-    touchpad: true
-    tablet: false
-    modem: false
-  battery: true                # laptop detected
+
+# Top-level sections (code reads these as storage.*, peripherals.*, battery):
+storage:
+  type: nvme                 # nvme | sata | mmc
+  device: ""                 # detected / --target
+  rotational: false
+  esp_uuid: ""               # set by stage 30
+  root_uuid: ""              # set by stage 20
+  root_partition: ""         # set by stage 10
+peripherals:
+  bluetooth: true
+  fingerprint: false
+  webcam: true
+  printer: unknown           # yes | no | unknown
+  scanner: unknown           # yes | no | unknown
+  touchpad: true
+  tablet: false
+  modem: false
+battery: true                # laptop detected
 
 disk:
   layout: btrfs_subvolumes
@@ -117,7 +122,7 @@ media:
   diagnostics: true            # vainfo, vdpauinfo
   multilib: false              # opt-in
   printing: false              # opt-in
-  printing_hp: false           # opt-in hplip
+  print_hp: false              # opt-in hplip
   scanning: false              # opt-in
   steam: false                 # opt-in steam-devices
 

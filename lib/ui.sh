@@ -13,17 +13,20 @@ _ui_default() {  # ui_default <default> <msg> -> REPLY (used internally)
     REPLY="$1"
     [ "${YAAP_UNATTENDED:-0}" = 1 ] && return 0
     if command -v gum >/dev/null 2>&1; then
+        # gum draws its TUI on stderr and reports via exit status/stdout.
+        # Do NOT redirect stderr to /dev/null — that would make prompts
+        # invisible while gum still waits for input on /dev/tty.
         local kind="$2"; shift 2
         case "$kind" in
             confirm)
-                gum confirm "$*" --default yes >/dev/null 2>&1 && REPLY=yes || REPLY=no
+                gum confirm "$*" --default=true >/dev/null && REPLY=yes || REPLY=no
                 ;;
             select)
-                REPLY="$(gum choose "$@" 2>/dev/null | head -n1)"
+                REPLY="$(gum choose "$@" | head -n1)"
                 [ -z "$REPLY" ] && REPLY="$1"
                 ;;
             input)
-                REPLY="$(gum input --placeholder "$2" 2>/dev/null)"
+                REPLY="$(gum input --placeholder "$2")"
                 [ -z "$REPLY" ] && REPLY="$1"
                 ;;
         esac
@@ -40,9 +43,9 @@ ui_confirm() {
     REPLY="$def"
     [ "${YAAP_UNATTENDED:-0}" = 1 ] && return 0
     if command -v gum >/dev/null 2>&1; then
-        local dyes=yes
-        [ "$def" = false ] && dyes=no
-        gum confirm "$msg" --default "$dyes" >/dev/null 2>&1 && REPLY=yes || REPLY=no
+        local dyes=true
+        [ "$def" = false ] && dyes=false
+        gum confirm "$msg" --default="$dyes" >/dev/null && REPLY=yes || REPLY=no
         return 0
     fi
     local prompt ans
@@ -68,7 +71,7 @@ ui_choose() {
     REPLY="$def"
     [ "${YAAP_UNATTENDED:-0}" = 1 ] && return 0
     if command -v gum >/dev/null 2>&1; then
-        REPLY="$(gum choose "${opts[@]}" 2>/dev/null | head -n1)"
+        REPLY="$(gum choose "${opts[@]}" | head -n1)"
         [ -z "$REPLY" ] && REPLY="$def"
         return 0
     fi
@@ -91,7 +94,7 @@ ui_input() {
     REPLY="$def"
     [ "${YAAP_UNATTENDED:-0}" = 1 ] && return 0
     if command -v gum >/dev/null 2>&1; then
-        REPLY="$(gum input --placeholder "$msg" 2>/dev/null)"
+        REPLY="$(gum input --placeholder "$msg")"
         [ -z "$REPLY" ] && REPLY="$def"
         return 0
     fi

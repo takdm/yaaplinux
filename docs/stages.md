@@ -172,7 +172,7 @@ conflict guards, install, verify. Sets `meta.stage=desktop`.
   ensures the user is in `video`.
 - `install_gstreamer_tuning` — `media.diagnostics` ⇒ NVIDIA decoder feature
   rank into `desktop.env.GST_PLUGIN_FEATURE_RANK`.
-- `install_printing` — `media.printing` ⇒ CUPS stack; `media.printing_hp` ⇒
+- `install_printing` — `media.printing` ⇒ CUPS stack; `media.print_hp` ⇒
   `hplip`; `pkg_conflict_guard hplip foo2zjs-nightly`; enables `cups` +
   `avahi-daemon`.
 - `install_scanning` — `media.scanning` ⇒ SANE stack; enables `ipp-usb`.

@@ -117,6 +117,11 @@ in the v2.0 release ISO; see troubleshooting.)
 `/dev/null` so the ISO boots straight to a login prompt instead of the
 interactive systemd-firstboot wizard.
 
+`iso/airootfs/etc/shadow` ships an empty root password (`root::14871::::::`,
+same as the releng profile) — without it root login is locked and the ISO
+cannot be used from the console at all. Its permissions (`0:0:400`) are set in
+`profiledef.sh`.
+
 ## 2a. Boot-testing in a VM
 
 `test-vm.sh` (repo root) boots any ISO in QEMU/KVM with a throwaway 30G qcow2

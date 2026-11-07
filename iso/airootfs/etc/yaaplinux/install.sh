@@ -57,17 +57,21 @@ EOF
 }
 
 # ---- argv -----------------------------------------------------------------
-for arg in "$@"; do
-    case "$arg" in
+# Accept both --opt=VALUE and --opt VALUE forms for valued options.
+while [ $# -gt 0 ]; do
+    case "$1" in
         --unattended) YAAP_UNATTENDED=1 ;;
         --debug)      YAAP_DEBUG=1 ;;
         --dry-run)    YAAP_DRYRUN=1 ;;
         --force)      YAAP_FORCE=1 ;;
-        --config=*)   YAAP_CONFIG="${arg#*=}" ;;
-        --target=*)   export YAAP_TARGET_DISK="${arg#*=}" ;;
+        --config=*)   YAAP_CONFIG="${1#*=}" ;;
+        --config)     shift; YAAP_CONFIG="${1:-}" ;;
+        --target=*)   export YAAP_TARGET_DISK="${1#*=}" ;;
+        --target)     shift; export YAAP_TARGET_DISK="${1:-}" ;;
         -h|--help)    usage; exit 0 ;;
-        *) echo "install.sh: unknown argument '$arg'" >&2; usage; exit 2 ;;
+        *) echo "install.sh: unknown argument '$1'" >&2; usage; exit 2 ;;
     esac
+    shift
 done
 export YAAP_UNATTENDED YAAP_DEBUG YAAP_DRYRUN
 
@@ -137,8 +141,13 @@ log_info "resume point: ${resume:-<all stages complete>}"
 # Post-install report (orchestrator-owned so it is always available, even on
 # resume when the final stage is skipped).
 write_report() {
+    # In dry-run (or any run where the target was never mounted) /mnt/root
+    # doesn't exist — write the live-system copy only, don't claim a target copy.
     local dst="$TARGET_ROOT/etc/yaaplinux"
     local report="$TARGET_ROOT/root/install-report.txt"
+    if [ ! -d "$TARGET_ROOT/root" ]; then
+        report="/root/install-report.txt"
+    fi
     {
         echo "=============================================="
         echo " YaapLinux Flavour — Post-Install Report"
@@ -205,6 +214,24 @@ for s in "${STAGE_ORDER[@]}"; do
     if stage_is_done "$s"; then
         log_info "skip $s (complete; config unchanged)"
         continue
+    fi
+
+    # Dry-run: never mutate disks, and stop before configuring a target root
+    # that was never populated. Stages 00 and 40 are dry-run aware already
+    # (40 logs instead of pacstrapping); the rest are skipped explicitly.
+    if [ "${YAAP_DRYRUN:-0}" = 1 ]; then
+        case "$s" in
+            10-partition|20-format|30-mount)
+                log_info "DRYRUN: skipping $s — no disk mutations performed"
+                continue
+                ;;
+            50-base-config|60-drivers-media|70-desktop|80-bootloader|90-postinstall)
+                log_info "DRYRUN: stopping before $s (target root is not populated in dry-run)"
+                log_info "DRYRUN: complete. Re-run without --dry-run to install."
+                write_report
+                exit 0
+                ;;
+        esac
     fi
 
     f="$STAGES_DIR/${s}.sh"

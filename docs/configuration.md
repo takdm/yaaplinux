@@ -57,18 +57,18 @@ offered for confirmation.
 | `hardware.gpu.intel_gen` | Intel generation class. | `broadwell_plus` / `legacy` / `null` | `null` | Detected |
 | `hardware.gpu.vaapi_driver` | VA-API driver chosen by the hardware matrix. | string | `libva-mesa-driver` | Detected |
 | `hardware.gpu.needs_linux_firmware_intel` | Intel VA-API needs the firmware subpackage. | bool | `false` | Detected |
-| `hardware.storage.type` | Target disk interface. | `nvme` / `sata` / `mmc` | `nvme` | Detected |
-| `hardware.storage.device` | Target disk device. | `/dev/XXX` | `""` | Detected / `--target` |
-| `hardware.storage.rotational` | HDD (`true`) vs SSD (`false`). | bool | `false` | Detected |
-| `hardware.peripherals.bluetooth` | Bluetooth present. | bool | `true` | Detected |
-| `hardware.peripherals.fingerprint` | Fingerprint reader present. | bool | `false` | Detected |
-| `hardware.peripherals.webcam` | Webcam present. | bool | `true` | Detected |
-| `hardware.peripherals.printer` | Printer present. | `yes` / `no` / `unknown` | `unknown` | Detected (conditional) |
-| `hardware.peripherals.scanner` | Scanner present. | `yes` / `no` / `unknown` | `unknown` | Config (not auto-detected) |
-| `hardware.peripherals.touchpad` | Touchpad present. | bool | `true` | Detected |
-| `hardware.peripherals.tablet` | Tablet/pen present. | bool | `false` | Detected |
-| `hardware.peripherals.modem` | Modem present. | bool | `false` | Config (not auto-detected) |
-| `hardware.battery` | Laptop battery present. | bool | `true` | Detected |
+| `storage.type` | Target disk interface. | `nvme` / `sata` / `mmc` | `nvme` | Detected |
+| `storage.device` | Target disk device. | `/dev/XXX` | `""` | Detected / `--target` |
+| `storage.rotational` | HDD (`true`) vs SSD (`false`). | bool | `false` | Detected |
+| `peripherals.bluetooth` | Bluetooth present. | bool | `true` | Detected |
+| `peripherals.fingerprint` | Fingerprint reader present. | bool | `false` | Detected |
+| `peripherals.webcam` | Webcam present. | bool | `true` | Detected |
+| `peripherals.printer` | Printer present. | `yes` / `no` / `unknown` | `unknown` | Detected (conditional) |
+| `peripherals.scanner` | Scanner present. | `yes` / `no` / `unknown` | `unknown` | Config (not auto-detected) |
+| `peripherals.touchpad` | Touchpad present. | bool | `true` | Detected |
+| `peripherals.tablet` | Tablet/pen present. | bool | `false` | Detected |
+| `peripherals.modem` | Modem present. | bool | `false` | Config (not auto-detected) |
+| `battery` | Laptop battery present. | bool | `true` | Detected |
 
 ## `disk`
 
@@ -175,7 +175,7 @@ All `media.*` toggles below are opt-in features (default off unless shown).
 | `media.diagnostics` | Run `vainfo`/`vdpauinfo` and apply GStreamer tuning. | bool | `true` | Config |
 | `media.multilib` | Enable multilib (triggers a full `-Syu` sync). | bool | `false` | Config |
 | `media.printing` | Install the CUPS printing stack. | bool | `false` | Config |
-| `media.printing_hp` | Install `hplip` for HP printers. | bool | `false` | Config |
+| `media.print_hp` | Install `hplip` for HP printers. | bool | `false` | Config |
 | `media.scanning` | Install the SANE scanning stack. | bool | `false` | Config |
 | `media.steam` | Install `steam-devices`. | bool | `false` | Config |
 

@@ -258,7 +258,7 @@ inside this function.
 cups  system-config-printer  avahi  ghostscript  gsfonts  gutenprint
 ```
 
-- If `media.printing_hp == true`, `hplip` is additionally installed and added to
+- If `media.print_hp == true`, `hplip` is additionally installed and added to
   `YAAP_INSTALL_SET`.
 - `pkg_conflict_guard hplip foo2zjs-nightly` guards the known
   foo2zjs/hplip PPD conflict (FS#58815, spec §8.5). `foo2zjs-nightly` is
@@ -300,7 +300,7 @@ sane  sane-airscan  ipp-usb  simple-scan
 | `media.diagnostics` | `true` | Installs `libva-utils`/`vdpauinfo`, runs `vainfo`, GStreamer decoder ranking + AV1 demotion |
 | `media.multilib` | `false` | Enables `[multilib]` and runs a full `-Syu` sync |
 | `media.printing` | `false` | Installs CUPS/gutenprint stack, enables cups+avahi |
-| `media.printing_hp` | `false` | Additionally installs `hplip` |
+| `media.print_hp` | `false` | Additionally installs `hplip` |
 | `media.scanning` | `false` | Installs SANE/sane-airscan/ipp-usb, enables ipp-usb |
 | `media.steam` | `false` | (stage 70) installs `steam-devices` |
 | `power.daemon` | `power-profiles-daemon` | `tlp` \| `power-profiles-daemon` \| `none` (laptop only) |
